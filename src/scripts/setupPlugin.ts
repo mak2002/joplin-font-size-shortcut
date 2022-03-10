@@ -7,19 +7,21 @@ const fs = joplin.require('fs-extra');
 
 export async function setupPlugin() {
     const installDir = await joplin.plugins.installationDir();		
-    const chromeCssFilePath = installDir + '/chrome.css';
+    const chromeCssFilePath = installDir + '/note.css';
     // const noteCssFilePath = installDir + '/note.css';
 
     // await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
     // await (joplin as any).window.loadNoteCssFile(noteCssFilePath);
 
     await joplin.settings.registerSection('ShortCuts', {
-        label: 'Font Size',
+        label: 'Font Size Shortcut',
         iconName: 'fas fa-palette',
-        description: 'This plugin implements shortcuts to increase/decrease Editor Font Size\nIncrease Font Size -> Cmd/Ctrl + Shift + ]\nDecrease Font Size -> Cmd/Ctrl + Shift + [',
+        description: 'Increase Font Size: Cmd/Ctrl + Shift + ] \n Decrease Font Size: Cmd/Ctrl + Shift + [',
     });
 
     let customFontSize: number;
+
+    // register settings
     await joplin.settings.registerSettings({
         'customFontSize' : {
             label: 'Custom Font Size',
@@ -37,6 +39,9 @@ export async function setupPlugin() {
         }
     })
 
+    console.log("-----just testing-----")
+
+    // returns css with incremented value
     async function returnUpdatedCSS(incrementValue: number): Promise<string> {
         customFontSize += incrementValue;
         console.log('customFontSize: ',customFontSize);
@@ -47,6 +52,7 @@ export async function setupPlugin() {
         return CSSstr;
     }
 
+    // returns css with custom font size
     async function cssFromCustomValue(incrementedValue: number): Promise<string> {
         const CSSstr = `.CodeMirror {
             font-size: ${incrementedValue}px;
@@ -54,10 +60,16 @@ export async function setupPlugin() {
         return CSSstr;
     }
 
+    // apply updated css to chrome css 
     async function UseUpdatedCSS(incrementValue: number) {
         const updatedCSS = await returnUpdatedCSS(incrementValue);
         await fs.writeFile(chromeCssFilePath, updatedCSS, 'utf8');
         await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
+        const note = await joplin.workspace.selectedNote();
+
+        let newNoteBody = note.body;
+        await joplin.commands.execute("textSelectAll");
+        await joplin.commands.execute("replaceSelection", newNoteBody);
     }
 
     await joplin.commands.register({
@@ -110,6 +122,7 @@ export async function setupPlugin() {
 
         console.log('-----testing this function-----', defaultFontSize, tempStr)
     } else {
+        // else load font size from memory
         customFontSize = await joplin.settings.value('customFontSize');
         let tempStr = await cssFromCustomValue(customFontSize);
 
