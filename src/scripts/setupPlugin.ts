@@ -113,6 +113,7 @@ export async function setupPlugin() {
 
     // checking if font size is set to season only
     if(isSessionOnly) {
+        // if it is season only then reset to default editor font size
         await joplin.settings.setValue('customFontSize', defaultFontSize);
         customFontSize = defaultFontSize;
         let tempStr = await cssFromCustomValue(defaultFontSize);
