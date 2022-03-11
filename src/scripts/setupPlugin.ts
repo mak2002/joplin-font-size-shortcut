@@ -47,7 +47,7 @@ export async function setupPlugin() {
         console.log('customFontSize: ',customFontSize);
         await joplin.settings.setValue('customFontSize', customFontSize); 
         const CSSstr = `.CodeMirror {
-            font-size: ${customFontSize}px;
+            font-size: ${customFontSize}px !important;
         }`
         return CSSstr;
     }
@@ -55,7 +55,7 @@ export async function setupPlugin() {
     // returns css with custom font size
     async function cssFromCustomValue(incrementedValue: number): Promise<string> {
         const CSSstr = `.CodeMirror {
-            font-size: ${incrementedValue}px;
+            font-size: ${incrementedValue}px !important;
         }`
         return CSSstr;
     }
@@ -104,12 +104,12 @@ export async function setupPlugin() {
     let isSessionOnly: boolean = await joplin.settings.value('sessionOnly');
     let defaultFontSize: number = await joplin.settings.globalValue('style.editor.fontSize');
 
-    await joplin.workspace.onNoteChange(async (event) => {
-        console.log("-----Note change event-----",event);
-        const tempStr = await cssFromCustomValue(customFontSize);
-        await fs.writeFile(chromeCssFilePath, tempStr, 'utf8');
-        await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
-    })
+    // await joplin.workspace.onNoteChange(async (event) => {
+    //     console.log("-----Note change event-----",event);
+    //     const tempStr = await cssFromCustomValue(customFontSize);
+    //     await fs.writeFile(chromeCssFilePath, tempStr, 'utf8');
+    //     await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
+    // })
 
     // checking if font size is set to season only
     if(isSessionOnly) {
