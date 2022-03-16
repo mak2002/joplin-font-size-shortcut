@@ -5,8 +5,8 @@
 ## Default shortcuts
 | Name                      | Default Shortcut    
 |---------------------------|---------------------
-| Increase Editor Font Size | `CmdOrCtrl+Shift+Y` 
-| Decrease Editor Font Size | `CmdOrCtrl+Shift+U` 
+| Increase Editor Font Size | `CmdOrCtrl+Shift+]` 
+| Decrease Editor Font Size | `CmdOrCtrl+Shift+[` 
 
 
 
@@ -21,3 +21,5 @@
 2. Decrease Editor Font Size
 
 ### Also there will be 2 buttons added in toolbar: 
+Last two buttons were added to change font size <br/>
+![buttons-png](https://github.com/mak2002/joplin-font-size-shortcut/blob/110425f0394b224224fd15234017513b73bd9c4b/plugin-2-pic.png)
