@@ -7,20 +7,15 @@ const fs = joplin.require('fs-extra');
 
 export async function setupPlugin() {
     const installDir = await joplin.plugins.installationDir();		
-    const chromeCssFilePath = installDir + '/note.css';
-    // const noteCssFilePath = installDir + '/note.css';
-
-    // await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
-    // await (joplin as any).window.loadNoteCssFile(noteCssFilePath);
-
+    const chromeCssFilePath = installDir + '/chrome.css';
+    
     await joplin.settings.registerSection('ShortCuts', {
-        label: 'Font Size Shortcut',
+        label: 'Custom Font Size',
         iconName: 'fas fa-palette',
-        description: 'Increase Font Size: Cmd/Ctrl + Shift + ] \n Decrease Font Size: Cmd/Ctrl + Shift + [',
     });
 
     let customFontSize: number;
-
+    let changeFactor: number;
     // register settings
     await joplin.settings.registerSettings({
         'customFontSize' : {
@@ -36,40 +31,58 @@ export async function setupPlugin() {
             section: 'ShortCuts',
             value: true,
             public: true,
+        },
+        'changeFactor' : {
+            label: 'Change Factor',
+            type: SettingItemType.Int,
+            section: 'ShortCuts',
+            value: 1,
+            public: true,
         }
     })
 
-    console.log("-----just testing-----")
-
-    // returns css with incremented value
-    async function returnUpdatedCSS(incrementValue: number): Promise<string> {
-        customFontSize += incrementValue;
-        console.log('customFontSize: ',customFontSize);
-        await joplin.settings.setValue('customFontSize', customFontSize); 
-        const CSSstr = `.CodeMirror {
-            font-size: ${customFontSize}px !important;
-        }`
-        return CSSstr;
+    // write custom css and load it in app
+    async function writeAndLoadCSS(CSS:string) {
+        await fs.writeFile(chromeCssFilePath, CSS, 'utf8')
+        await joplin.window.loadChromeCssFile(chromeCssFilePath);
+        await joplin.commands.execute('editor.execCommand', {
+            name: 'refresh',
+            args: [],
+        })
     }
 
     // returns css with custom font size
-    async function cssFromCustomValue(incrementedValue: number): Promise<string> {
+    async function cssFromCustomValue(incrementedValue: number) {
         const CSSstr = `.CodeMirror {
             font-size: ${incrementedValue}px !important;
         }`
         return CSSstr;
     }
 
-    // apply updated css to chrome css 
-    async function UseUpdatedCSS(incrementValue: number) {
-        const updatedCSS = await returnUpdatedCSS(incrementValue);
-        await fs.writeFile(chromeCssFilePath, updatedCSS, 'utf8');
-        await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
-        const note = await joplin.workspace.selectedNote();
+    // compare new css with the local one and then load the css 
+    async function compareCSSAndApply(newCSS:string): Promise<void> {
 
-        let newNoteBody = note.body;
-        await joplin.commands.execute("textSelectAll");
-        await joplin.commands.execute("replaceSelection", newNoteBody);
+        fs.readFile(chromeCssFilePath, 'utf8', async function(err:string, data) {
+            if (err) throw err;
+            // compare old CSS(data) with newCSS
+            if(data !== newCSS) {
+                await writeAndLoadCSS(newCSS)
+            }
+        })
+    }
+
+    // apply updated css to chrome css 
+    async function executeFontChange(changeValue: number) {
+        
+        const currentCustomFont = await joplin.settings.value('customFontSize');
+        await joplin.settings.setValue('customFontSize', currentCustomFont + changeValue)
+        await compareCSSAndApply(`.CodeMirror {
+            font-size: ${currentCustomFont + changeValue}px !important;
+        }`)
+        await joplin.commands.execute('editor.execCommand', {
+            name: 'refresh',
+            args: [],
+        })
     }
 
     await joplin.commands.register({
@@ -77,7 +90,7 @@ export async function setupPlugin() {
         label: 'Increase Editor Font Size',
         iconName: 'fas fa-plus-circle',
         execute: async () => {
-            UseUpdatedCSS(1);
+            await executeFontChange(changeFactor);
         },
     });
     
@@ -86,55 +99,44 @@ export async function setupPlugin() {
         label: 'Decrease Editor Font Size',
         iconName: 'fas fa-minus-circle',
         execute: async () => {
-            UseUpdatedCSS(-1);
+            await executeFontChange(-changeFactor);
         },
     });
-
+    
     await joplin.settings.onChange(async (event: ChangeEvent) => {
-        console.log(event.keys);
-        const value = await joplin.settings.value(event.keys[0]);
-
-        const cssStr = await cssFromCustomValue(value);
-        await fs.writeFile(chromeCssFilePath, cssStr, 'utf8');
-        await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
+    
+        // currently whenever we change font size with shortcut, then this function is also triggered 
+        // causing 1 unnecessary function call, but as we compare it doesn't execute 
+        if(event.keys[0] === 'customFontSize') {
+            const value = await joplin.settings.value(event.keys[0]);
+            const cssStr = await cssFromCustomValue(value);
+            await compareCSSAndApply(cssStr);
+        } 
+        else if (event.keys[0] === 'changeFactor') {
+            changeFactor = await joplin.settings.value(event.keys[0]);
+        }
         
-        console.log("value change: ",value, cssStr);
-    })
+    });
 
     let isSessionOnly: boolean = await joplin.settings.value('sessionOnly');
     let defaultFontSize: number = await joplin.settings.globalValue('style.editor.fontSize');
+    changeFactor = await joplin.settings.value('changeFactor');
 
-    // await joplin.workspace.onNoteChange(async (event) => {
-    //     console.log("-----Note change event-----",event);
-    //     const tempStr = await cssFromCustomValue(customFontSize);
-    //     await fs.writeFile(chromeCssFilePath, tempStr, 'utf8');
-    //     await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
-    // })
-
-    // checking if font size is set to season only
+    // checking if font size is set to session only
+    // if it is session only then reset to default editor font size
     if(isSessionOnly) {
-        // if it is season only then reset to default editor font size
+
         await joplin.settings.setValue('customFontSize', defaultFontSize);
-        customFontSize = defaultFontSize;
-        let tempStr = await cssFromCustomValue(defaultFontSize);
+        const defaultFontSizeCSS:string = await cssFromCustomValue(defaultFontSize);
+        await writeAndLoadCSS(defaultFontSizeCSS);
+        
 
-        await fs.writeFile(chromeCssFilePath, tempStr, 'utf8');
-        await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
-
-        console.log('-----testing this function-----', defaultFontSize, tempStr)
     } else {
         // else load font size from memory
-        customFontSize = await joplin.settings.value('customFontSize');
-        let tempStr = await cssFromCustomValue(customFontSize);
-
-        await fs.writeFile(chromeCssFilePath, tempStr, 'utf8');
-        await (joplin as any).window.loadChromeCssFile(chromeCssFilePath);
-        console.log('-----testing this function-----', defaultFontSize, tempStr)
-
+        let customFontSize:number = await joplin.settings.value('customFontSize');
+        const customFontSizeCSS:string = await cssFromCustomValue(customFontSize);
+        await writeAndLoadCSS(customFontSizeCSS);
     }
-    
-    console.log('-----isSessionOnly-----',isSessionOnly);
-    
 
     await joplin.views.toolbarButtons.create('increaseFontSizeButton', 'increaseFontSize', ToolbarButtonLocation.EditorToolbar);
     await joplin.views.toolbarButtons.create('decreaseFontSizeButton', 'decreaseFontSize', ToolbarButtonLocation.EditorToolbar);

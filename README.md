@@ -1,24 +1,23 @@
-# Joplin Plugin
+# Keyboard Shortcut for Editor Font Size
 
-This is a template to create a new Joplin plugin.
+### This plugins adds shortcut to increase/decrease Editor(markdown only) Font size
 
-The main two files you will want to look at are:
+## Default shortcuts
+| Name                      | Default Shortcut    
+|---------------------------|---------------------
+| Increase Editor Font Size | `CmdOrCtrl+Shift+Y` 
+| Decrease Editor Font Size | `CmdOrCtrl+Shift+U` 
 
-- `/src/index.ts`, which contains the entry point for the plugin source code.
-- `/src/manifest.json`, which is the plugin manifest. It contains information such as the plugin a name, version, etc.
 
-## Building the plugin
 
-The plugin is built using Webpack, which creates the compiled code in `/dist`. A JPL archive will also be created at the root, which can use to distribute the plugin.
+### These can be modified from `Keyboard Shortcuts` section.
 
-To build the plugin, simply run `npm run dist`.
 
-The project is setup to use TypeScript, although you can change the configuration to use plain JavaScript.
+### From plugins settings, you have option to keep font size for current session only.  
 
-## Updating the plugin framework
 
-To update the plugin framework, run `npm run update`.
+### After installing this plugins, 2 menu items will be added to `Tools`
+1. Increase Editor Font Size
+2. Decrease Editor Font Size
 
-In general this command tries to do the right thing - in particular it's going to merge the changes in package.json and .gitignore instead of overwriting. It will also leave "/src" as well as README.md untouched.
-
-The file that may cause problem is "webpack.config.js" because it's going to be overwritten. For that reason, if you want to change it, consider creating a separate JavaScript file and include it in webpack.config.js. That way, when you update, you only have to restore the line that include your file.
+### Also there will be 2 buttons added in toolbar: 
