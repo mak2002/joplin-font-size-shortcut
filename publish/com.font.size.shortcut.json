@@ -8,6 +8,13 @@
 	"author": "mak2002",
 	"homepage_url": "https://github.com/mak2002/joplin-font-size-shortcut.git",
 	"repository_url": "https://github.com/mak2002/joplin-font-size-shortcut.git",
-	"keywords": ["font", "font size"],
-	"categories": ["editor"]
+	"keywords": [
+		"font",
+		"font size"
+	],
+	"categories": [
+		"editor"
+	],
+	"_publish_hash": "sha256:2ee9263a9d6c32338428041b78252fa74ef909d19bc4d669a40d1a0be6cc42cd",
+	"_publish_commit": "master:0cdba71e4f3b15b81f3ba2a37ce4c2a0b18872ac"
 }
